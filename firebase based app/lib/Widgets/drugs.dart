@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+
 import 'package:blearn/Pages/cart.dart';
 import 'package:blearn/Pages/inventory.dart';
-import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../globals.dart';
 
 Future<List<Map<String, dynamic>>> fetchDrugNames() async {
   final url = Uri.parse(
-    'https://raw.githubusercontent.com/JosephG911/drugs-data/main/drugs.json',
+    'https://raw.githubusercontent.com/JosephG911/drugs-data/refs/heads/main/drugs.json',
   );
   final response = await http.get(url);
   if (response.statusCode == 200) {
@@ -19,8 +21,13 @@ Future<List<Map<String, dynamic>>> fetchDrugNames() async {
 
 class MainPage extends StatefulWidget {
   final List<Map<String, dynamic>> patientDrugs;
-  final VoidCallback onRefresh;
-  MainPage({required this.patientDrugs, required this.onRefresh});
+  final Future<void> Function() onRefresh;
+
+  const MainPage({
+    super.key,
+    required this.patientDrugs,
+    required this.onRefresh,
+  });
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -29,38 +36,43 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int currentIndex = 0;
 
+  Future<bool> _handleExit() async {
+    await widget.onRefresh();
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: [
-          DrugListPage(
-            selectedDrugs: widget.patientDrugs,
-            onRefresh: widget.onRefresh,
-          ),
-          InventoryPage(),
-          Selected(
-            selectedDrugs: widget.patientDrugs,
-            onRefresh: widget.onRefresh,
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: const Color(0xFFBB86FC),
-        unselectedItemColor: Colors.white54,
-        currentIndex: currentIndex,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) => setState(() => currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2),
-            label: "Stock",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.alarm), label: "Alarm List"),
-        ],
+    return WillPopScope(
+      onWillPop: _handleExit,
+      child: Scaffold(
+        body: IndexedStack(
+          index: currentIndex,
+          children: [
+            DrugListPage(selectedDrugs: widget.patientDrugs),
+            const InventoryPage(),
+            Selected(selectedDrugs: widget.patientDrugs),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Colors.black,
+          selectedItemColor: const Color(0xFFBB86FC),
+          unselectedItemColor: Colors.white54,
+          currentIndex: currentIndex,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) => setState(() => currentIndex = index),
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2),
+              label: 'Stock',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.alarm),
+              label: 'Alarm List',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -68,10 +80,11 @@ class _MainPageState extends State<MainPage> {
 
 class DrugListPage extends StatefulWidget {
   final List<Map<String, dynamic>> selectedDrugs;
-  final VoidCallback onRefresh;
-  DrugListPage({required this.selectedDrugs, required this.onRefresh});
+
+  const DrugListPage({super.key, required this.selectedDrugs});
+
   @override
-  _DrugListPageState createState() => _DrugListPageState();
+  State<DrugListPage> createState() => _DrugListPageState();
 }
 
 class _DrugListPageState extends State<DrugListPage> {
@@ -84,12 +97,12 @@ class _DrugListPageState extends State<DrugListPage> {
   void initState() {
     super.initState();
     fetchDrugNames().then((drugs) {
-      if (mounted)
-        setState(() {
-          _allFetchedDrugs = drugs;
-          _displayDrugs = drugs;
-          _isLoading = false;
-        });
+      if (!mounted) return;
+      setState(() {
+        _allFetchedDrugs = drugs;
+        _displayDrugs = drugs;
+        _isLoading = false;
+      });
     });
   }
 
@@ -106,17 +119,18 @@ class _DrugListPageState extends State<DrugListPage> {
   void _toggleAlarm(Map<String, dynamic> drug) {
     setState(() {
       final selectedDrugId = drugIdentifier(drug);
-      int index = widget.selectedDrugs.indexWhere(
+      final index = widget.selectedDrugs.indexWhere(
         (e) => drugIdentifier(e) == selectedDrugId,
       );
+
       if (index == -1) {
         widget.selectedDrugs.add({...drug, 'count': 1});
       } else {
         widget.selectedDrugs.removeAt(index);
       }
-      allDrugs = List.from(widget.selectedDrugs);
+
+      allDrugs = List<Map<String, dynamic>>.from(widget.selectedDrugs);
     });
-    widget.onRefresh();
   }
 
   @override
@@ -135,17 +149,17 @@ class _DrugListPageState extends State<DrugListPage> {
                   child: TextField(
                     controller: _searchController,
                     style: const TextStyle(color: Colors.white),
-                    onChanged: (v) => setState(
+                    onChanged: (value) => setState(
                       () => _displayDrugs = _allFetchedDrugs
                           .where(
-                            (d) => d['name'].toLowerCase().contains(
-                              v.toLowerCase(),
+                            (drug) => drug['name'].toLowerCase().contains(
+                              value.toLowerCase(),
                             ),
                           )
                           .toList(),
                     ),
                     decoration: InputDecoration(
-                      hintText: "Search drugs...",
+                      hintText: 'Search drugs...',
                       filled: true,
                       fillColor: Colors.grey[900],
                       prefixIcon: const Icon(
@@ -165,10 +179,10 @@ class _DrugListPageState extends State<DrugListPage> {
                     itemBuilder: (context, index) {
                       final drug = _displayDrugs[index];
                       final currentDrugId = drugIdentifier(drug);
-                      bool isSelected = widget.selectedDrugs.any(
+                      final isSelected = widget.selectedDrugs.any(
                         (e) => drugIdentifier(e) == currentDrugId,
                       );
-                      bool inStock = persistentStock.containsKey(drug['name']);
+                      final inStock = persistentStock.containsKey(drug['name']);
 
                       return ListTile(
                         leading: Image.asset(

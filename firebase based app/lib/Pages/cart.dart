@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../globals.dart';
 
 class Selected extends StatefulWidget {
   final List<Map<String, dynamic>> selectedDrugs;
-  final VoidCallback onRefresh;
-  const Selected({
-    super.key,
-    required this.selectedDrugs,
-    required this.onRefresh,
-  });
+
+  const Selected({super.key, required this.selectedDrugs});
 
   @override
   State<Selected> createState() => _SelectedState();
@@ -18,9 +15,8 @@ class _SelectedState extends State<Selected> {
   void _deleteItem(int index) {
     setState(() {
       widget.selectedDrugs.removeAt(index);
-      allDrugs = List.from(widget.selectedDrugs);
+      allDrugs = List<Map<String, dynamic>>.from(widget.selectedDrugs);
     });
-    widget.onRefresh();
   }
 
   @override
@@ -30,7 +26,7 @@ class _SelectedState extends State<Selected> {
       body: widget.selectedDrugs.isEmpty
           ? const Center(
               child: Text(
-                "No medications added",
+                'No medications added',
                 style: TextStyle(color: Colors.white24),
               ),
             )
@@ -76,7 +72,7 @@ class _SelectedState extends State<Selected> {
                       ),
                     ),
                     subtitle: const Text(
-                      "Scheduled for this alarm",
+                      'Scheduled for this alarm',
                       style: TextStyle(color: Colors.white38, fontSize: 12),
                     ),
                     trailing: IconButton(

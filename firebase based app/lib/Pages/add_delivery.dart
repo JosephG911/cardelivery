@@ -3,7 +3,7 @@ import 'package:blearn/Widgets/drugs.dart';
 
 class AddDelivery extends StatelessWidget {
   final List<Map<String, dynamic>> patientDrugs;
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
 
   const AddDelivery({
     super.key,

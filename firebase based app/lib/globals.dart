@@ -25,11 +25,4 @@ String alarmNoteFromDrugs(List<Map<String, dynamic>> drugs) {
       .join(', ');
 }
 
-List<Map<String, dynamic>> patients = <Map<String, dynamic>>[
-  {
-    "id": "1",
-    "name": "Ahmed",
-    "selectedDrugs": <Map<String, dynamic>>[],
-    "alarms": <Map<String, dynamic>>[],
-  },
-];
+List<Map<String, dynamic>> patients = <Map<String, dynamic>>[];
