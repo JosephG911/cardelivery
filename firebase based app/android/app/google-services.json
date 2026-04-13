@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "976605005737",
+    "project_id": "med-car",
+    "storage_bucket": "med-car.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:976605005737:android:9760fd315c937b79dea6b8",
+        "android_client_info": {
+          "package_name": "com.example.blearn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMcQk1nMGKxiGO3MeJa58UoGKNc5lD9sw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
